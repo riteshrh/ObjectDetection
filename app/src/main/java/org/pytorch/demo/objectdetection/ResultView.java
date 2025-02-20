@@ -28,6 +28,7 @@ public class ResultView extends View {
     private Paint mPaintRectangle;
     private Paint mPaintText;
     private ArrayList<Result> mResults;
+    private ArrayList<String> mDistances;
 
     public ResultView(Context context) {
         super(context);
@@ -38,33 +39,75 @@ public class ResultView extends View {
         mPaintRectangle = new Paint();
         mPaintRectangle.setColor(Color.YELLOW);
         mPaintText = new Paint();
+        mDistances = new ArrayList<>();
     }
+
+//    @Override
+//    protected void onDraw(Canvas canvas) {
+//        super.onDraw(canvas);
+//
+//        if (mResults == null) return;
+//        for (Result result : mResults) {
+//            mPaintRectangle.setStrokeWidth(5);
+//            mPaintRectangle.setStyle(Paint.Style.STROKE);
+//            canvas.drawRect(result.rect, mPaintRectangle);
+//
+//            Path mPath = new Path();
+//            RectF mRectF = new RectF(result.rect.left, result.rect.top, result.rect.left + TEXT_WIDTH,  result.rect.top + TEXT_HEIGHT);
+//            mPath.addRect(mRectF, Path.Direction.CW);
+//            mPaintText.setColor(Color.MAGENTA);
+//            canvas.drawPath(mPath, mPaintText);
+//
+//            mPaintText.setColor(Color.WHITE);
+//            mPaintText.setStrokeWidth(0);
+//            mPaintText.setStyle(Paint.Style.FILL);
+//            mPaintText.setTextSize(32);
+//            canvas.drawText(String.format("%s %.2f", PrePostProcessor.mClasses[result.classIndex], result.score), result.rect.left + TEXT_X, result.rect.top + TEXT_Y, mPaintText);
+//        }
+//    }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        if (mResults == null) return;
-        for (Result result : mResults) {
+        if (mResults == null || mDistances == null) return;
+
+        // Draw bounding boxes and class information
+        for (int i = 0; i < mResults.size(); i++) {
+            Result result = mResults.get(i);
+
+            // Draw bounding box
             mPaintRectangle.setStrokeWidth(5);
             mPaintRectangle.setStyle(Paint.Style.STROKE);
             canvas.drawRect(result.rect, mPaintRectangle);
 
+            // Draw text background for class and score information
             Path mPath = new Path();
-            RectF mRectF = new RectF(result.rect.left, result.rect.top, result.rect.left + TEXT_WIDTH,  result.rect.top + TEXT_HEIGHT);
+            RectF mRectF = new RectF(result.rect.left, result.rect.top, result.rect.left + TEXT_WIDTH, result.rect.top + TEXT_HEIGHT);
             mPath.addRect(mRectF, Path.Direction.CW);
             mPaintText.setColor(Color.MAGENTA);
             canvas.drawPath(mPath, mPaintText);
 
+            // Display the class name and detection score
             mPaintText.setColor(Color.WHITE);
             mPaintText.setStrokeWidth(0);
             mPaintText.setStyle(Paint.Style.FILL);
             mPaintText.setTextSize(32);
             canvas.drawText(String.format("%s %.2f", PrePostProcessor.mClasses[result.classIndex], result.score), result.rect.left + TEXT_X, result.rect.top + TEXT_Y, mPaintText);
+
+            // Display the distance if available (only for pairs)
+            // Iterate through the distances and draw them where needed
+            if (i < mDistances.size()) {
+                String distance = mDistances.get(i);
+                mPaintText.setColor(Color.WHITE);
+                // Display the distance below the detection information
+                canvas.drawText(distance, result.rect.left + TEXT_X, result.rect.top + TEXT_Y + TEXT_HEIGHT + 20, mPaintText);
+            }
         }
     }
 
-    public void setResults(ArrayList<Result> results) {
+    public void setResults(ArrayList<Result> results, ArrayList<String> distances) {
         mResults = results;
+        mDistances = distances;
     }
 }

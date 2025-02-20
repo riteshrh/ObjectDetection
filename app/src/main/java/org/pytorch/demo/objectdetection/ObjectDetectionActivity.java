@@ -32,9 +32,11 @@ public class ObjectDetectionActivity extends AbstractCameraXActivity<ObjectDetec
 
     static class AnalysisResult {
         private final ArrayList<Result> mResults;
+        private final ArrayList<String> mDistances;
 
-        public AnalysisResult(ArrayList<Result> results) {
+        public AnalysisResult(ArrayList<Result> results, ArrayList<String> distances) {
             mResults = results;
+            mDistances = distances;
         }
     }
 
@@ -53,7 +55,7 @@ public class ObjectDetectionActivity extends AbstractCameraXActivity<ObjectDetec
 
     @Override
     protected void applyToUiAnalyzeImageResult(AnalysisResult result) {
-        mResultView.setResults(result.mResults);
+        mResultView.setResults(result.mResults, result.mDistances);
         mResultView.invalidate();
     }
 
@@ -109,6 +111,30 @@ public class ObjectDetectionActivity extends AbstractCameraXActivity<ObjectDetec
         float ivScaleY = (float)mResultView.getHeight() / bitmap.getHeight();
 
         final ArrayList<Result> results = PrePostProcessor.outputsToNMSPredictions(outputs, imgScaleX, imgScaleY, ivScaleX, ivScaleY, 0, 0);
-        return new AnalysisResult(results);
+        final ArrayList<String> distances = new ArrayList<>();
+
+        for (int i = 0; i < results.size(); i++) {
+            Result drone1 = results.get(i);
+            float centerX1 = (drone1.rect.left + drone1.rect.right) / 2.0f;
+            float centerY1 = (drone1.rect.top + drone1.rect.bottom) / 2.0f;
+
+            // Compare with every other drone (after i)
+            for (int j = i + 1; j < results.size(); j++) {
+                Result drone2 = results.get(j);
+                float centerX2 = (drone2.rect.left + drone2.rect.right) / 2.0f;
+                float centerY2 = (drone2.rect.top + drone2.rect.bottom) / 2.0f;
+
+                // Calculate the Euclidean distance between the centers of drone1 and drone2
+                double distance = Math.sqrt(Math.pow(centerX2 - centerX1, 2) + Math.pow(centerY2 - centerY1, 2));
+
+                // Store the distance information
+                distances.add("Distance between drone " + i + " and drone " + j + ": " + String.format("%.2f", distance) + " pixels");
+
+                // Log the distance
+                Log.d("Distance", "Distance between drone " + i + " and drone " + j + ": " + String.format("%.2f", distance) + " pixels");
+            }
+        }
+
+        return new AnalysisResult(results, distances);
     }
 }
